@@ -1,0 +1,16 @@
+# Local development override — live-reloads source via cargo run.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up
+services:
+  api:
+    build:
+      context: .
+      target: builder
+    command: cargo run
+    env_file: .env.local
+    volumes:
+      - .:/app
+      - cargo-cache:/usr/local/cargo/registry
+
+volumes:
+  cargo-cache:

@@ -1,58 +1,34 @@
-use actix_web::{get, post, patch, App, HttpResponse, HttpServer, Responder};
-use actix_web::web::{Data, Json, Path};
-use validator::Validate;
-use crate::models::{BuyPizzaRequest, UpdatePizzaURL };
-use crate::db::Database;
+use anyhow::Context;
+use std::net::SocketAddr;
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
-mod config;
-mod models;
-mod db;
+use auto_platform_api::{config::Config, routes};
 
-#[get("/pizzas")]
-async fn get_pizzas(db: Data<Database>) -> impl Responder {
-    let pizzas = db.get_all_pizas().await;
-    match pizzas {
-        Some(found_pizzas) =>
-            HttpResponse::Ok().body(format!("{:?}", found_pizzas)),
-        None =>
-            HttpResponse::Unauthorized().body("No pizzas"),
-    }
-}
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let cfg = Config::from_env().context("failed to load config from environment")?;
 
-#[post("/buy_pizza")]
-async fn buy_pizza(body: Json<BuyPizzaRequest>) -> impl Responder {
-    let is_valid = body.validate();
-    match is_valid {
-        Ok(_) => {
-            let pizza_name = body.pizza_name.clone();
-            HttpResponse::Ok().body(format!("Pizza entered is {pizza_name}"))
-        },
-        Err(_) => HttpResponse::BadRequest().body("Pizza name invalid"),
-    }
-}
+    // Structured JSON logs — Cloud Run ships these straight to Cloud Logging.
+    tracing_subscriber::registry()
+        .with(EnvFilter::new(&cfg.rust_log))
+        .with(fmt::layer().json())
+        .init();
 
-#[patch("/update_pizza/{uuid}")]
-async fn update_pizza(update_pizza_url: Path<UpdatePizzaURL>) -> impl Responder {
-    let uuid: String = update_pizza_url.into_inner().uuid;
-    HttpResponse::Ok().body(format!("Updating the pizza with {uuid}"))
-}
+    let addr: SocketAddr = format!("{}:{}", cfg.host, cfg.port)
+        .parse()
+        .context("invalid HOST/PORT combination")?;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
+    let app = routes::build(cfg);
 
-    // initialize db
-    let db = Database::init().await.expect("Error connecting to database");
-    let db_data = Data::new(db);
+    tracing::info!(%addr, "auto-platform-api listening");
 
-    // initialize http server
-    HttpServer::new(move || {
-        App::new()
-            .app_data(db_data.clone())
-            .service(get_pizzas)
-            .service(buy_pizza)
-            .service(update_pizza)
-    })
-    .bind("127.0.0.1:8080")?
-    .run()
-    .await
+    let listener = tokio::net::TcpListener::bind(addr)
+        .await
+        .context("failed to bind TCP listener")?;
+
+    axum::serve(listener, app)
+        .await
+        .context("server error")?;
+
+    Ok(())
 }
