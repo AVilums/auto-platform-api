@@ -126,12 +126,27 @@ external services required.
 ### One-time setup
 
 ```bash
+# Get GCP CLI (Windows)
+(New-Object Net.WebClient).DownloadFile("https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe", "$env:Temp\GoogleCloudSDKInstaller.exe")
+& $env:Temp\GoogleCloudSDKInstaller.exe
+
+gcloud init
+
+# Get Terraform (Windows)
+winget install -e --id Hashicorp.Terraform
+
 # Authenticate
 gcloud auth login
 gcloud config set project YOUR_PROJECT_ID
 
+# Allow ADC
+gcloud auth application-default login
+
 # Create the Terraform state bucket
-gsutil mb -p YOUR_PROJECT_ID gs://YOUR_PROJECT_ID-tfstate
+gcloud storage buckets create gs://YOUR_PROJECT_ID-tfstate \
+  --project=YOUR_PROJECT_ID \
+  --location=europe-north1 \
+  --uniform-bucket-level-access
 
 # Initialise Terraform
 cd infra
@@ -145,7 +160,7 @@ terraform apply -var="project_id=YOUR_PROJECT_ID"
 
 ```bash
 # Build and push the image
-IMAGE="us-central1-docker.pkg.dev/YOUR_PROJECT_ID/auto-platform/api"
+IMAGE="europe-north1-docker.pkg.dev/YOUR_PROJECT_ID/auto-platform/api"
 docker build -t "$IMAGE:$GIT_SHA" .
 docker push "$IMAGE:$GIT_SHA"
 
