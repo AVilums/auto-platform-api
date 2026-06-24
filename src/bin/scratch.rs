@@ -26,6 +26,7 @@ fn variables() {
     return;
 }
 
+// control flow (logic gates)
 fn control_flow(x: u32) {
     println!("\n --- Control Flow ---");
 
@@ -76,7 +77,16 @@ fn control_flow(x: u32) {
     return;
 }
 
+// ownership and borrowing
 fn ownership_borrowing() {
+
+    fn calculate_length(s: &String) -> usize { return s.len(); }
+
+    fn change(s: &mut String) -> () {
+        s.push_str(", world");
+        return;
+    }
+
     println!("\n --- Ownership and Borrowing ---");
 
     // Move - s1 no longer valid after this
@@ -100,23 +110,20 @@ fn ownership_borrowing() {
     return;
 }
 
-fn calculate_length(s: &String) -> usize {
-    return s.len();
-}
-
-fn change(s: &mut String) -> () {
-    s.push_str(", world");
-    return;
-}
-
 fn struct_enums() {
     println!("\n --- Structs and Enums ---");
 
+    // struct with data
     #[derive(Debug)]
-    struct Point { x: f64, y: f64}
+    struct Point {
+        x: f64, y: f64
+    }
 
     impl Point {
-        fn new(x: f64, y: f64) -> Self { Self { x, y }}
+        fn new(x: f64, y: f64) -> Self {
+            return Self { x, y };
+        }
+
         fn distance_from_origin(&self) -> f64 {
             let km: f64 = (self.x.powi(2) + self.y.powi(2)).sqrt();
             return km;
@@ -125,6 +132,30 @@ fn struct_enums() {
 
     let p = Point::new(3.0, 4.0);
     println!("{p:?} - distance from origin: {}", p.distance_from_origin());
+
+    // enum with data
+    #[derive(Debug)]
+    enum Shape {
+        Circle(f64),
+        Rectangle(f64, f64)
+    }
+
+    impl Shape {
+        fn area(&self) -> f64 {
+            match self {
+                Shape::Circle(r) => std::f64::consts::PI * r * r,
+                Shape::Rectangle(w, h) => w * h,
+            }
+        }
+    }
+
+    let shapes = [Shape::Circle(2.0), Shape::Rectangle(3.0, 4.0)];
+    for s in &shapes {
+        println!("{s:?} area = {:.2}", s.area());
+    }
+
+    let circl = Shape::Circle(4.0);
+    println!("Circle struct {}", circl.area());
 
     return;
 }
