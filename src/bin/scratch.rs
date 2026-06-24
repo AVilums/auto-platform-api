@@ -6,6 +6,8 @@ fn main() {
     control_flow(10);
     ownership_borrowing();
     struct_enums();
+    pattern_matching();
+    closures_iterations();
 }
 
 // variables
@@ -159,3 +161,58 @@ fn struct_enums() {
 
     return;
 }
+
+// pattern matching
+fn pattern_matching() {
+    println!("\n --- Pattern matching ---");
+
+    // Option<T>
+    let maybe: Option<i32> = Some(42);
+    println!("{maybe:?} value is {}", maybe.unwrap());
+    match maybe {
+        Some(n) => println!("Found a number: {n}"),
+        None => println!("No number found"),
+    }
+
+    // if let — shorter, when error is irrelevant
+    if let Some(n) = maybe {
+        println!("if-let: {n}");
+    }
+
+    // while let
+    let mut stack = vec![1, 2, 3];
+    while let Some(n) = stack.pop() {
+        print!("{n} ");
+    }
+    println!();
+
+    // Destructuring tuples
+    let (a, b, c) = (1, "two", 3.0_f32);
+    println!("tuple: {a}, {b}, {c}");
+
+    return;
+}
+
+// closures & iterations
+fn closures_iterations() {
+    println!("\n --- Closure and Iterations ---");
+
+    let numbers = vec![1, 2, 3, 4, 5, 6];
+
+    let evens_squared: Vec<i32> = numbers.iter()
+        .filter(|&&x| x % 2 == 0)
+        .map(|&x| x * x)
+        .collect();
+    println!("even squared: {evens_squared:?}");
+
+    let sum: i32 = numbers.iter().sum();
+    println!("sum = {sum}");
+
+    // closure capturing environment
+    let threshold = 3;
+    let above: Vec<_> = numbers.iter().filter(|&&x| x > threshold).collect();
+    println!("above {threshold}: {above:?}");
+
+    return;
+}
+
