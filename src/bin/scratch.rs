@@ -8,6 +8,9 @@ fn main() {
     struct_enums();
     pattern_matching();
     closures_iterations();
+    error_handling();
+    strings();
+    collections();
 }
 
 // variables
@@ -112,6 +115,7 @@ fn ownership_borrowing() {
     return;
 }
 
+// struct and enums
 fn struct_enums() {
     println!("\n --- Structs and Enums ---");
 
@@ -193,7 +197,7 @@ fn pattern_matching() {
     return;
 }
 
-// closures & iterations
+// closures and iterations
 fn closures_iterations() {
     println!("\n --- Closure and Iterations ---");
 
@@ -216,3 +220,94 @@ fn closures_iterations() {
     return;
 }
 
+// error handling
+fn error_handling() {
+    println!("\n --- Error handling ---");
+
+    // Result<T, E>
+    fn divide(a: f64, b: f64) -> Result<f64, String> {
+        if b == 0.0 {
+            return Err("Cannot divide by zero".to_string());
+        } else {
+            return Ok(a / b);
+        }
+    }
+
+    match divide(10.0, 2.0) {
+        Ok(v) => println!("10/2 = {v}"),
+        Err(e) => println!("Error: {e}"),
+    }
+
+    match divide(5.0, 0.0) {
+        Ok(v) => println!("5/0 = {v}"),
+        Err(e) => println!("Error: {e}"),
+    }
+
+    // uwrap_or, map, and_then
+    let result = divide(9.0, 3.0).unwrap_or(0.0);
+    println!("unwrap_or: {result}");
+
+    fn parse_and_double(s: &str) -> Result<i32, std::num::ParseIntError> {
+        let n: i32 = s.parse()?;
+        return Ok(n * 2);
+    }
+
+    println!("parse '21' * 2 = {:?}", parse_and_double("21"));
+    println!("parse 'abc' * 2 = {:?}", parse_and_double("abc"));
+
+    return;
+}
+
+// Strings
+fn strings() {
+    println!("\n --- Strings ---");
+
+    // &str - string slice, immutable view, lives in the binary
+    let s: &str = "hello, world";
+
+    // String - heal allocated, growable
+    let mut owned = String::from("Hello");
+    owned.push_str(", world");
+    owned.push('!');
+
+    println!("&str: {s}");
+    println!("String: {owned}");
+    println!("uppercase: {}", owned.to_uppercase());
+    println!("contains 'world': {}", owned.contains("world"));
+    println!("replace: {}", owned.replace("world", "Rust"));
+
+    // format! - cheapest way to concatenate without moves
+    let combined = format!("{} + {}", s, owned);
+    println!("combined: {combined}");
+
+    return;
+}
+
+// collections
+fn collections() {
+    println!("\n --- Collections ---");
+
+    // Vec<T>
+    let mut v: Vec<i32> = Vec::new();
+    v.extend([1, 2, 3]);
+    v.push(4);
+    println!("vec: {v:?}, len={}", v.len());
+
+    // HashMap
+    use std::collections::HashMap;
+    let mut scores: HashMap<&str, u32> = HashMap::new();
+    scores.insert("Alice", 10);
+    scores.insert("Bob", 20);
+    scores.entry("Alice").and_modify(|s| *s += 5); //updates existing
+    scores.entry("Carol").or_insert(15); // insert if missing
+    println!("scores: {:?}", scores);
+
+    // HashSet
+    use std::collections::HashSet;
+    let a: HashSet<i32> = [1, 2, 3, 4].iter().cloned().collect();
+    let b: HashSet<i32> = [3, 4, 5, 6].iter().cloned().collect();
+    let intersection: Vec<_> = a.intersection(&b).collect();
+    println!("a ∩ b = {:?}", intersection);
+
+    return;
+}
